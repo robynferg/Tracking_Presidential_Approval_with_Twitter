@@ -1,24 +1,25 @@
 library(xts)
 library(fields)
+library(plotly)
 
 # Read in data of sentiment of placebo words
-sentSeries = read.csv('placebo_sentiments.csv')
+sentSeries = read.csv('placebo_sentiments2019-08-25.csv')
 # convert to .xts format
-sentSeries.xts = xts(sentSeries[,-1], order.by=as.Date(sentSeries$date))
+sentSeries.xts = xts(sentSeries[,-1], order.by=as.Date(sentSeries$Date, '%m/%d/%Y'))
 
 # read in data of sentiment of 'Trump' tweets
-trumpSent = read.csv('trumpSent.csv')
-trumpSent.xts = xts(trumpSent$allMean, order.by=as.Date(trumpSent$date))
+trumpSent = read.csv('trumpSent2019-08-25.csv')
+trumpSent.xts = xts(trumpSent$meanSentiment, order.by=as.Date(trumpSent$Date))
 
 # read in presidential approval data from fivethirtyeight
 # downloaded from https://projects.fivethirtyeight.com/trump-approval-ratings/
-trend = read.csv('approval_topline.csv')
+trend = read.csv('approval_topline2019-08-30.csv')
 # convert trend for Adult approval and disapproval to .xts format
 trend.xts = xts(trend[trend$subgroup=='Adults',which(names(trend) %in% c('approve_estimate', 'disapprove_estimate'))],
                 order.by=as.Date(trend$modeldate[trend$subgroup=='Adults'], format='%m/%d/%Y'))
-trend.xts = trend.xts[index(trend.xts)<=as.Date('2018-05-20'),]
+trend.xts = trend.xts[index(trend.xts)<=as.Date('2019-08-25'),]
 
-# useful functions
+# smoothing and lag functions
 kSmooth = function(data.xts, k){
   # k-day smoothing for data in xts form
   # takes the average of the current and previous k-1 days, even if some of those days are missing data
@@ -58,7 +59,7 @@ lag = 30 # maximum lag
 # correlations between sentiment of placebo words and presidential approval
 # Note: this can take a long time to run
 klCorrs = array(0, dim=c(length(ks), 2*lag+1, ncol(sentSeries)-1))
-vars = names(sentSeries)[names(sentSeries) %in% c('date')==FALSE]
+vars = names(sentSeries)[names(sentSeries) %in% c('Date')==FALSE]
 for(j in 1:dim(klCorrs)[3]){ # iterate through each reference word
   # time series of sentiment of word
   series = sentSeries.xts[,which(names(sentSeries.xts)==vars[j])]
@@ -72,7 +73,7 @@ for(j in 1:dim(klCorrs)[3]){ # iterate through each reference word
 }
 
 # find maximum correlation for each placebo word and location of optimal smoothing, lag parameter
-corrs = data.frame()
+placeboCorrs = data.frame()
 for(i in 1:length(vars)){
   var = vars[i]
   varCorrs = klCorrs[,,i]
@@ -80,30 +81,52 @@ for(i in 1:length(vars)){
     kl = which(abs(varCorrs)==max(abs(varCorrs), na.rm=TRUE), arr.ind=TRUE)
     maxCorr = varCorrs[kl]
     temp = data.frame('word'=var, 'k'=ks[kl[,1]], 'l'=c(-lag:lag)[kl[,2]], 'maxCorr' = maxCorr)
-    corrs = rbind(corrs, temp)
+    placeboCorrs = rbind(placeboCorrs, temp)
   }
 }
-corrs = corrs[abs(corrs$maxCorr)<1,]
+placeboCorrs = placeboCorrs[abs(placeboCorrs$maxCorr)<1,]
 
 # histogram of maximum absolute correlations
-hist(corrs$maxCorr, xlab='Maximum Absolute Correlation', main='')
+hist(placeboCorrs$maxCorr, xlab='Maximum Absolute Correlation', main='')
 
 # smoothing and lag values where maximum absolute correlation occurs
-plot(corrs$k, corrs$l, xlab='smoothing value', ylab='lag value', pch=19)
+plot(placeboCorrs$k, placeboCorrs$l, xlab='smoothing value', ylab='lag value', pch=19)
 
 # look at heatmap of correlations based on smoothing, lag parameters
 set.seed(1234)
 is = sample(1:length(vars), 6)
-par(mfrow=c(2,3))
-for(i in is){
-  par(mar=c(5,4.5,4,7))
-  image(klCorrs[,,i], col=tim.colors(500), bty='n', xlab='smoothing', ylab='lag', cex.lab=1, 
-        zlim=c(min(klCorrs[,,i]), max(klCorrs[,,i])), las=1, axes=FALSE, main=vars[i])
-  axis(2, at=seq(0, 1, len=13), labels=seq(-lag, lag, by=5))
-  axis(1, at=seq(0, 1, len=10), labels=seq(0, k, by=5))
-  image.plot(klCorrs[,,i], legend.only=TRUE, col=tim.colors(500))
-}
-par(mfrow=c(1,1))
+
+f_label = list(size=24); f_tick = list(size=18)
+plot_ly(x=ks, y=c(-lag:lag), z=t(klCorrs[,,is[1]]), type='contour', reversescale=T) %>%
+  layout(title=vars[is[1]], font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
+plot_ly(x=ks, y=c(-lag:lag), z=t(klCorrs[,,is[2]]), type='contour', reversescale=T) %>%
+  layout(title=vars[is[2]], font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
+plot_ly(x=ks, y=c(-lag:lag), z=t(klCorrs[,,is[3]]), type='contour', reversescale=T) %>%
+  layout(title=vars[is[3]], font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
+plot_ly(x=ks, y=c(-lag:lag), z=t(klCorrs[,,is[4]]), type='contour', reversescale=T) %>%
+  layout(title=vars[is[4]], font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
+plot_ly(x=ks, y=c(-lag:lag), z=t(klCorrs[,,is[5]]), type='contour', reversescale=T) %>%
+  layout(title=vars[is[5]], font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
+plot_ly(x=ks, y=c(-lag:lag), z=t(klCorrs[,,is[6]]), type='contour', reversescale=T) %>%
+  layout(title=vars[is[6]], font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
 
 # correlation between Trump tweets and presidential approval
 klTrump = matrix(0, nrow=length(ks), ncol=2*lag+1)
@@ -122,19 +145,22 @@ c(-lag:lag)[kl[1,2]]
 ks[kl[1,1]]
 
 # how correlation between sentiment of Trump tweets and presidential approval changes with smoothing, lag parameters
-image(klTrump, col=tim.colors(500), bty='n', xlab='smoothing', ylab='lag', cex.lab=1,
-      zlim = c(min(klTrump), max(klTrump)), las=1, axes=FALSE, main='Trump')
-axis(2, at=seq(0, 1, len=13), labels=seq(-lag, lag, by=5))
-axis(1, at=seq(0, 1, len=10), labels=seq(0, k, by=5))
-image.plot(klTrump, legend.only=TRUE, col=tim.colors(500))
+f_label = list(size=24); f_tick = list(size=18)
+plot_ly(x=ks, y=c(-lag:lag), z=t(klTrump), type='contour', reversescale=T) %>%
+  layout(title='Trump', font=f_label, 
+         xaxis=list(title='Smoothing', titlefont=f_label, tickfont=f_tick), 
+         yaxis=list(title='Lag', titlefont=f_label, tickfont=f_tick),
+         margin=list(b=50, t=50))
 
 # in comparison to placebo words
-hist(corrs$maxCorr, freq=TRUE, main='', xlab='Maximum Absolute Correlation', breaks=seq(-1, 1, by=.1))
-abline(v=trumpCorr, col='red', lwd=3)
+hist(placeboCorrs$maxCorr, freq=TRUE, main='', breaks=seq(-1, 1, by=.1), ylab='', xlab='', cex.axis=1.5)
+abline(v=trumpCorr, col='red', lwd=6)
+mtext("Maximum Absolute Correlation", side=1, cex=2, line=2.75)
+mtext("Frequency", side=2, cex=2, line=2.75)
 
 
 # robustness to change in end date
-endDates = as.Date('2017-05-20'):as.Date('2018-05-20')
+endDates = as.Date('2017-05-20'):as.Date('2019-08-25')
 robust.df = data.frame() # endDate, k, l, maxCorr
 for(end in endDates){
   trumpTemp.xts = trumpSent.xts[index(trumpSent.xts)<=as.Date(end), ]
@@ -174,8 +200,42 @@ par(mfrow=c(1,1))
 
 plot(robust.df$endDate, robust.df$maxCorr, ylab='Correlation', xlab='Data End Date', pch=20)
 lines(robust.df$endDate, robust.df$corrs, lty=2)
-legend('bottomright', c('Maximum Absolute Correlation', 'With 0 lag, 29 day smoothing'), lty=c(1,2), lwd=c(3, 1))
+legend('bottomright', c('Maximum Absolute Correlation', 'With 30 day lag, 45 day smoothing'), lty=c(1,2), lwd=c(3, 1))
 
+
+# 'p-value'
+pval = sum(abs(placeboCorrs$maxCorr)>=trumpCorr)/nrow(placeboCorrs)
+
+# how 'p-value' changes over time
+placeboCorrs_list = list() # each entry a vector of placebo correlations
+pval_changes = data.frame()
+
+for(i in 1:length(monthlyEndDates)){ # iterate over end date
+  endDatePlaceboCorrs = c()
+  temp_array = allOverTime[[i]]
+  for(j in 1:dim(temp_array)[3]){ # iterate over placebo words
+    # find location of optimal correlation
+    kl_dateWord = which(abs(temp_array[,,j])==max(abs(temp_array[,,j]),na.rm=TRUE), arr.ind=TRUE)
+    # optimal correlation and attach to vector
+    maxCorr_dateWord = temp_array[kl_dateWord[1], kl_dateWord[2], j]
+    endDatePlaceboCorrs[j] = maxCorr_dateWord
+  }
+  endDatePlaceboCorrs = endDatePlaceboCorrs[is.na(endDatePlaceboCorrs)==FALSE]
+  placeboCorrs_list[[i]] = endDatePlaceboCorrs
+  # "Trump" correlation from that end date
+  trumpCorrEndDate = robust.df$maxCorr[robust.df$endDate==monthlyEndDates[i]]
+  # 'p-value' of "Trump" correlation
+  pval_endDate = sum(abs(endDatePlaceboCorrs)>=abs(trumpCorrEndDate))/length(endDatePlaceboCorrs)
+  # attach to data frame
+  temp_pval = data.frame('endDate'=monthlyEndDates[i], 'pval'=pval_endDate)
+  pval_changes = rbind(pval_changes, temp_pval)
+}
+pval_changes = rbind(pval_changes, data.frame('endDate'=as.Date('2019-08-25'), 'pval'=pval))
+
+plot(pval_changes$endDate, pval_changes$pval, xlab='End Date', ylab='Proportion', pch=19, ylim=c(0, 1))
+
+
+# smaller window for smoothing and lag for comparison
 instKLcorrs = data.frame()
 for(i in 1:dim(klCorrs)[3]){
   var = vars[i]
