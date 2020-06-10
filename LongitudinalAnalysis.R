@@ -53,17 +53,21 @@ for(date in dates){
 
 ## Frequency of original tweets
 # days with highest frequency of tweets
-nTopDays = 10
+nTopDays = 4
 repDaily[order(repDaily$nOrigTweets/repDaily$nUsers, decreasing=TRUE)[1:nTopDays],]
 demDaily[order(demDaily$nOrigTweets/demDaily$nUsers, decreasing=TRUE)[1:nTopDays],]
 
 # plots of frequency for Democrats and Republicans
 ggplot(repDaily, aes(x=date, y=nOrigTweets/nUsers)) + geom_point() + xlab('Date') + 
-  ylab('Number of Original Tweets') + ggtitle('Frequency of Republican Tweets') +
-  geom_vline(xintercept=c(as.Date('2016-11-08'), as.Date('2017-01-20')))
+  ylab('Average Number of Original Tweets') + ggtitle('Frequency of Republican Tweets') +
+  geom_vline(xintercept=c(as.Date('2016-11-08'), as.Date('2017-01-20'))) +
+  geom_vline(xintercept=c(as.Date('2016-11-09'), as.Date('2016-10-20'), as.Date('2016-10-10'), as.Date('2016-11-08')),
+             linetype='dashed')
 ggplot(demDaily, aes(x=date, y=nOrigTweets/nUsers)) + geom_point() + xlab('Date') +
-  ylab('Number of Original Tweets') + ggtitle('Frequency of Democratic Tweets') +
-  geom_vline(xintercept=c(as.Date('2016-11-08'), as.Date('2017-01-20')))
+  ylab('Average Number of Original Tweets') + ggtitle('Frequency of Democratic Tweets') +
+  geom_vline(xintercept=c(as.Date('2016-11-08'), as.Date('2017-01-20'))) +
+  geom_vline(xintercept=c(as.Date('2016-10-10'), as.Date('2016-11-09'), as.Date('2016-10-20'), as.Date('2016-09-27')),
+             linetype='dashed')
 
 ## Sentiment of original tweets
 # all sentiment
