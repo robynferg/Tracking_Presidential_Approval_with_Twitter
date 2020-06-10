@@ -1,5 +1,5 @@
 # Tracking_Presidential_Approval_with_Twitter
-Data and scripts for 'Tracking Presidential Approval with Twitter: A Critical Comparison of Cross-Sectional and Longitudinal Analyses'
+Data and scripts for 'A Critical Evaluation of Tracking Surveys with Social Media: A Case Study in Presidential Approval' by Ferg, Conrad, Gagnon-Bartsch
 
 Data sets:
 - approval_topline2019-08-30.csv: Daily presidential approval data downloaded from https://projects.fivethirtyeight.com/trump-approval-ratings/?ex_cid=rrpromo on August 30, 2019. 
