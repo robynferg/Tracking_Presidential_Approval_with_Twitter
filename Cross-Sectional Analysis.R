@@ -52,10 +52,10 @@ ccfLag = function(ts1, ts2, max.lag){
   return(lagDF)
 }
 
-## unsmoothed sentiment with error bars
-plot(as.Date(trumpSent$date), trumpSent$allMean, pch='.', xlab='Date', ylab='Mean Sentiment',
-     main='Unsmoothed Sentiment of "Trump" Tweets Over Time')
-for(i in 1:nrow(trumpSent)){
+## unsmoothed sentiment with error bars: first 100 days
+plot(as.Date(trumpSent$date)[1:100], trumpSent$allMean[1:100], pch='.', xlab='Date', ylab='Mean Sentiment',
+     main='Unsmoothed Sentiment of "Trump" Tweets Over Time: First 100 Days')
+for(i in 1:100){
   segments(x0=as.Date(trumpSent$date[i]), y0=trumpSent$allMean[i]-2*trumpSent$sd[i]/sqrt(1000),
            x1=as.Date(trumpSent$date[i]), y1=trumpSent$allMean[i]+2*trumpSent$sd[i]/sqrt(1000))
 }
