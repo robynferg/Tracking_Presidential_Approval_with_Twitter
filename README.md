@@ -11,4 +11,4 @@ Scripts:
 - Cross-Sectional Analysis.R: R script for cross-sectional analysis. Using 'approval_topline2019-08-30.csv', 'placebo_sentiments2019-08-25.csv', and 'trumpSent2019-08-25.csv' data files, calculates optimal correlation between "Trump" tweets and presidential approval, finds reference distribution, and how these change over time as more data is gathered. 
 - Longitudinal Analysis.R: R script for longitudinal analysis. Creates plots for frequency and sentiment of tweets for Democrats and Republicans from 2016 through mid-2017 to find evidence of a political signal.
 
-We also provide code for how we create 'trumpSent2019-08-25.csv' from csv files of raw tweets in the 'Creating_data_files' folder.
+We also provide code for how we create 'trumpSent2019-08-25.csv' from csv files of raw tweets in the 'Creating_data_files' folder. To protect the privacy of users, we do not provide the tweets themselves. 
