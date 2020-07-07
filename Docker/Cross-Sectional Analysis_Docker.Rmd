@@ -220,7 +220,10 @@ legend('bottomright', c('Maximum Absolute Correlation', 'With 30 day lag, 45 day
 ```{r}
 # 'p-value'
 pval = sum(abs(placeboCorrs$maxCorr)>=trumpCorr)/nrow(placeboCorrs)
+print(pval)
+```
 
+```{r}
 # how 'p-value' changes over time
 allOverTime = list()
 monthlyEndDates = seq(as.Date('2017-06-01'), as.Date('2019-08-01'), "month")
